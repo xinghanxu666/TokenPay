@@ -26,7 +26,7 @@ docker images
 ### main 主网 正式运营请选择主网
 
 ```
-docker run -d -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay token-pay
+docker run -d -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay ghcr.io/xinghanxu666/tokenpay:latest
 ```
 
 + `yourdir`为你自己存放配置文件和数据库文件的文件夹路径
@@ -34,7 +34,7 @@ docker run -d -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/Tok
 ### shasta 测试网
 
 ```
-docker run -d -e ASPNETCORE_ENVIRONMENT="Development" -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay token-pay
+docker run -d -e ASPNETCORE_ENVIRONMENT="Development" -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay ghcr.io/xinghanxu666/tokenpay:latest
 ```
 
 + `yourdir`为你自己存放配置文件和数据库文件的文件夹路径
