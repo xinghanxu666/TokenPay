@@ -24,12 +24,9 @@ jobs:
       - name: Get version from release tag
         id: get_version
         run: |
-          # 获取版本号
           VERSION=${GITHUB_REF#refs/tags/v}
           VERSION=${VERSION#refs/tags/}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          # 判断是否为稳定版本
           IS_STABLE="false"
           if [ "${{ github.event.release.prerelease }}" = "false" ] && [ "${{ github.event.release.draft }}" = "false" ]; then
             IS_STABLE="true"
@@ -49,17 +46,28 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker images
-        uses: docker/build-push-action@v5
-        with:
-          context: ./src
-          file: ./src/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
-            # 如果是稳定版本，添加latest标签
-            ${{ fromJSON(steps.get_version.outputs.is_stable) && format('ghcr.io/{0}/{1}:latest', github.repository_owner, env.IMAGE_NAME) || '' }}
-            ${{ fromJSON(steps.get_version.outputs.is_stable) && format('{0}/{1}:latest', secrets.DOCKERHUB_USERNAME, env.IMAGE_NAME) || '' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }} \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }} \
+            -f ./src/Dockerfile \
+            ./src
+          if [ "${{ steps.get_version.outputs.is_stable }}" = "true" ]; then
+            docker tag ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }} ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          fi
+
+      - name: Push images to GitHub Container Registry
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
+          if [ "${{ steps.get_version.outputs.is_stable }}" = "true" ]; then
+            docker push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          fi
+
+      - name: Push images to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
+          if [ "${{ steps.get_version.outputs.is_stable }}" = "true" ]; then
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          fi
