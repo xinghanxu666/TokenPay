@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  USERNAME: xinghanxu6666
+  USERNAME: xinghanxu666
   IMAGE_NAME: tokenpay
 
 jobs:
